@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:myapple="http://www.loring.com/schema/apple"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.loring.com/schema/apple http://www.loring.com/schema/apple.xsd">
+
+    <myapple:apple id="apple" price="123" origin="Asia"/>
+</beans>
