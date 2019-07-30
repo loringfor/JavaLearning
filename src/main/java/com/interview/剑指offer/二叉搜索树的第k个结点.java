@@ -1,5 +1,7 @@
 package com.interview.剑指offer;
 
+import com.interview.TreeNode;
+
 public class 二叉搜索树的第k个结点 {
     static TreeNode res=null;
     public static TreeNode kthNode(TreeNode root, int k) {
@@ -26,9 +28,3 @@ public class 二叉搜索树的第k个结点 {
     }
 }
 
-class TreeNode {
-    int val;
-    TreeNode left;
-    TreeNode right;
-    TreeNode(int x) { val = x; }
-}
