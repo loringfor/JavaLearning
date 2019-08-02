@@ -703,7 +703,7 @@ Socket、SocketChannel二者的实质都是一样的，都是为了实现客户�
 
 **使用方式不同**：Socket、ServerSocket类可以传入不同参数直接实例化对象并绑定ip和端口。
 
-# 数据库
+# 数据库与高并发
 
 ## 1. 范式
 
@@ -1008,6 +1008,14 @@ InnoDB：支持
 ​    [参考链接1]( https://zhuanlan.zhihu.com/p/23624390)
 
 ​    [参考链接2](https://zhuanlan.zhihu.com/p/27700617)
+
+### 联合索引、最左前缀匹配
+
+在创建多列索引时，我们根据业务需求，where子句中使用最频繁的一列放在最左边，因为MySQL索引查询会遵循最左前缀匹配的原则，即最左优先，在检索数据时从联合索引的最左边开始匹配。所以当我们创建一个联合索引的时候，如(key1,key2,key3)，相当于创建了（key1）、(key1,key2)和(key1,key2,key3)三个索引，这就是最左匹配原则。
+
+### 索引下推、查询优化
+
+
 
 ## 9. 从一张大表读取数据，如何解决性能问题
 
@@ -1351,9 +1359,19 @@ InnoDB：支持
 
 ## 1. 如何设计可以动态扩容缩容的分库分表方案？
 
-## 2. 用过哪些分库分表中间件，有啥优点和缺点，讲一下你 了解的分库分表中间件的底层实现原理？
+1. 停机迁移方案（不推荐）
+2. 升级从库
+3. 双写迁移
+
+## 2. 用过哪些分库分表中间件，有啥优点和缺点，讲一下你了解的分库分表中间件的底层实现原理？
 
 ## 3. 我现在有一个未分库分表的系统，以后系统需分库分表,如何设计,让未分库分表的系统动态切换到分库分表的系统上？
+
+[参考链接](https://github.com/doocs/advanced-java)
+
+1. 停机迁移方案（不推荐）
+2. 升级从库
+3. 双写迁移
 
 ## 4. 分布式事务知道吗？你们怎么解决的？TCC？那若出现网络原因,网络连不通怎么办？
 
@@ -1363,9 +1381,26 @@ InnoDB：支持
 
 分表：其实降低了分布式事务
 
-## 6. 分布式寻址方式都有哪些算法？知道一致性hash吗？手写一下java实现代码？你若userId取摸分片，那我要查一段连续时间里的数据怎么办？
+## 6. 分布式寻址方式都有哪些算法？知道一致性hash吗？手写一下java实现代码？
 
-## 7. 如何解决分库分表主键问题？有什么实现方案？
+## 7.分库分表中若对userId取摸分片，那我要查一段连续时间里的数据怎么办？
+
+建立userId与时间得一个映射关系
+
+## 8. 如何解决分库分表主键问题？有什么实现方案？
+
+UUID、Snowflakes
+
+## 9.如何设计一个高并发系统
+
+可以从以下几点考虑：
+
+- 系统拆分：可采用微服务或者Dubbo，将系统划分成多个小系统
+- 缓存：大部分系统都是多读少写，采用Redis等缓存
+- MQ
+- 分库分表
+- 读写分离
+- ElasticSearch
 
 
 
@@ -1385,129 +1420,130 @@ InnoDB：支持
 
 ```java
 //饿汉式**
-
 public class Singleton1 {
-
     public static Singleton1 singleton=new Singleton1();
-
     private Singleton1(){}
-
     public static Singleton1 getInstance(){
-
         return singleton;
-
     }
-
 }
-
 
 
 //**懒汉式**
-
 public class Singleton2 {
-
     public static Singleton2 singleton;
-
     private Singleton2(){}
-
     public static synchronized Singleton2 getInstance(){
-
         if(singleton==null){
-
             singleton=new Singleton2();
-
         }
-
         return singleton;
-
     }
-
 }
-
 
 
 //**静态内部类**
-
 public class Singleton3 {
-
     public static class SingletonInstance{
 
         public static Singleton3 singleton=new Singleton3();
-
     }
-
     private Singleton3(){}
-
     public static Singleton3 getInstance(){
-
         return SingletonInstance.singleton;
-
     }
-
 }
-
 
 
 //**枚举**
-
 public enum Singleton4 {
 
     INSTANCE;
-
     public void whateverMethod(){}
-
 }
-
 
 
 //**双重检查**
-
 public class Singleton5 {
-
     public static volatile Singleton5 singleton;
-
     private Singleton5(){}
-
     public static Singleton5 getInstance(){
-
         if(singleton==null){
-
             synchronized (Singleton5.class){
-
                 if(singleton==null){
-
                     singleton=new Singleton5();
-
                 }
-
             }
-
         }
-
         return singleton;
-
     }
-
 }
 ```
 
-
-
-
-
 ## 3. 简单工厂模式、工厂模式、抽象工厂模式
 
-Ø 简单工厂模式（静态工厂模式）
+[参考链接](https://juejin.im/entry/58f5e080b123db2fa2b3c4c6)
 
-虽然某种程度不符合设计原则，但实际使用最多。
+工厂模式主要有三种：**简单工厂模式**、**工厂方法模式**、**抽象工厂模式**
 
-Ø 工厂方法模式
+### 简单工厂模式
+简单工厂模式算不上一种设计模式，更多的是一种编程习惯。
 
-不修改已有类的前提下，通过增加新的工厂类实现拓展。
+定义一个工厂类，根据传入的参数不同返回不同的实例，被创建的实例具有共同的父类或接口。
 
-Ø 抽象工厂模式
+**适用场景**：
 
-不可以增加产品，可以增加产品族。
+（1）需要创建的对象较少。　　
+（2）客户端不关心对象的创建过程。
+
+### 工厂方法模式
+
+工厂方法模式是简单工厂的仅一步深化， 在工厂方法模式中，我们不再提供一个统一的工厂类来创建所有的对象，而是**针对不同的对象提供不同的工厂**。也就是说**每个对象都有一个与之对应的工厂**。
+
+**定义：** 定义一个用于创建对象的接口，让子类决定将哪一个类实例化。工厂方法模式让一个类的实例化延迟到其子类。
+
+
+和简单工厂对比一下，最根本的区别在于，简单工厂只有一个统一的工厂类，而工厂方法是**针对每个要创建的对象都会提供一个工厂类**，这些工厂类都实现了一个工厂基类（本例中的ReaderFactory ）。
+
+**适用场景：**
+（1）客户端不需要知道它所创建的对象的类。例子中我们不知道每个图片加载器具体叫什么名，只知道创建它的工厂名就完成了创建过程。
+（2）客户端可以通过子类来指定创建对应的对象。
+
+### 抽象工厂模式
+这个模式并不符合开闭原则。实际开发还需要做好权衡。
+
+抽象工厂模式是工厂方法的仅一步深化，在这个模式中的工厂类不单单可以创建一个对象，而是可以创建一组对象。这是和工厂方法最大的不同点。
+
+**定义：** 提供一个创建一系列相关或相互依赖对象的接口，而无须指定它们具体的类。（ 在抽象工厂模式中，每一个具体工厂都提供了多个工厂方法用于产生多种不同类型的对象）
+　　
+抽象工厂和工厂方法一样可以划分为4大部分：
+* AbstractFactory（抽象工厂）：声明了一组用于创建对象的方法，注意是一组。
+* ConcreteFactory（具体工厂）：它实现了在抽象工厂中声明的创建对象的方法，生成一组具体对象。
+* AbstractProduct（抽象产品）：它为每种对象声明接口，在其中声明了对象所具有的业务方法。
+* ConcreteProduct（具体产品）：它定义具体工厂生产的具体对象。
+
+**适用场景：**
+（1）和工厂方法一样客户端不需要知道它所创建的对象的类。
+（2）需要一组对象共同完成某种功能时。并且可能存在多组对象完成不同功能的情况。
+（3）系统结构稳定，不会频繁的增加对象。（因为一旦增加就需要修改原有代码，不符合开闭原则）
+
+----
+
+**工厂模式要点:**
+     **简单工厂模式(静态工厂模式)** 
+     虽然某种程度不符合设计原则,但实际使用最多。 
+     **工厂方法模式**
+     不修改已有类的前提下,通过增加新的工厂类实现扩展。
+     **抽象工厂模式**
+     不可以增加产品，可以增加产品族! 
+
+应用场景
+    * JDK中Calendar的getInstance方法
+        * JDBC中Connection对象的获取
+        * Hibernate中SessionFactory创建Session
+        * spring中IOC容器创建管理bean对象
+        * XML解析时的DocumentBuilderFactory创建解析器对象
+        * 反射中Class对象的newInstance()
 
 # Java高级多线程
 
@@ -1537,17 +1573,22 @@ public class Singleton5 {
 
 ## 2. 线程状态转换
 
+![](.\images\线程状态.png)
+
+![](.\images\线程状态说明.png)
+
 ## 3. 线程间通信
 
-Ø volatile和synchronized关键字
+- volatile和synchronized关键字
 
-Ø 等待/通知机制
+- 等待/通知机制
 
-Ø Thread.join()的使用
+- Thread.join()的使用
 
-Ø ThreadLocal的使用
+- ThreadLocal的使用
 
-Ø 通过管道进行线程间通信：字节流
+- 通过管道进行线程间通信：字节流
+
 
 ## 4. 并行和并发的区别和联系
 
@@ -1589,33 +1630,28 @@ public class Singleton5 {
 
 ## 6. 多线程的实现方式，有什么区别
 
-1、**继承**Thread**类实现多线程**
+**1、继承Thread类实现多线程**
 
 继承Thread类的方法尽管被我列为一种多线程实现方式，但Thread本质上也是实现了Runnable接口的一个实例，它代表一个线程的实例，并且，启动线程的唯一方法就是通过Thread类的start()实例方法。start()方法是一个native方法，它将启动一个新线程，并执行run()方法。这种方式实现多线程很简单，通过自己的类直接extend Thread，并复写run()方法，就可以启动新线程并执行自己定义的run()方法。缺点：不能继承其他类。
 
-**2**、实现Runnable**接口方式实现多线程**
+**2、实现Runnable接口方式实现多线程**
 
 如果自己的类已经extends另一个类，就无法直接extends Thread，此时，必须实现一个Runnable接口，如下：
 
+```java
 public class MyThread extends OtherClass implements Runnable {
-
-　　public void run() {
-
-　　  System.out.println("MyThread.run()");
-
-　　}
-
+    public void run() {
+        System.out.println("MyThread.run()");
+    }
 }
 
-为了启动MyThread，需要首先实例化一个Thread，并传入自己的MyThread实例：
-
+//为了启动MyThread，需要首先实例化一个Thread，并传入自己的MyThread实例：
 MyThread myThread = new MyThread();
-
 Thread thread = new Thread(myThread);
-
 thread.start();
+```
 
-**3**、实现 Callable** **接口**
+**3、实现 Callable 接口**
 
 可以返回结果（通过Future），也可以抛出异常
 
@@ -1623,47 +1659,30 @@ thread.start();
 
 以上两点也是Callable接口 与 Runnable 接口的区别
 
+```java
 public class MultiThread_Test {
-
- public static void main(String[] args) throws Exception {
-
- ExecutorService es = Executors.newSingleThreadExecutor();
-
- // 自动在一个新的线程上启动 MyCallable，执行 call 方法
-
- Future<Integer> f = es.submit(new MyCallable());
-
- // 当前 main 线程阻塞，直至 future 得到值
-
- System.out.println(f.get());
-
- es.shutdown();
-
- }
-
+    public static void main(String[] args) throws Exception {
+        ExecutorService es = Executors.newSingleThreadExecutor();
+        // 自动在一个新的线程上启动 MyCallable，执行 call 方法
+        Future<Integer> f = es.submit(new MyCallable());
+        // 当前 main 线程阻塞，直至 future 得到值
+        System.out.println(f.get());
+        es.shutdown();
+    }
 }
 
 class MyCallable implements Callable<Integer> {
-
- public Integer call() {
-
- System.out.println(Thread.currentThread().getName());
-
- try {
-
- Thread.sleep(2000);
-
- } catch (InterruptedException e) {
-
- e.printStackTrace();
-
- }
-
- return 123;
-
- }
-
+    public Integer call() {
+        System.out.println(Thread.currentThread().getName());
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return 123;
+    }
 }
+```
 
 ## 7. 什么叫守护线程
 
@@ -1958,7 +1977,7 @@ CAS虽然很高效的解决原子操作，但是CAS仍然存在三大问题。**
 
 ## 1. 对与IoC和AOP的理解
 
-**IoC**（控制反转）**，将类的创建和依赖关系写在配置文件里，由配置文件注入，实现了松耦合。
+**IoC（控制反转）**，将类的创建和依赖关系写在配置文件里，由配置文件注入，实现了松耦合。
 
 **AOP**将安全，事务等于程序逻辑相对独立的功能抽取出来，利用spring的配置文件将这些功能插进去，实现了按照切面编程，提高了复用性。
 
@@ -1971,31 +1990,30 @@ CAS虽然很高效的解决原子操作，但是CAS仍然存在三大问题。**
 JDK动态代理必须提供接口才能使用，在一些不能提供接口的环境中，只能采用其它第三方技术，比如CGLIB动态代理。它的优势在于不需要提供接口，只要一个非抽象类就能实现动态代理。CGLIB是利用ASM开源包，对代理对象类的class文件加载进来，通过修改其字节码生成子类来处理
 
 ## 4. spring bean的生命周期
-1) 实例化（当我们的程序加载beans.xml文件），把我们的bean（前提是scope=singleton）实例化(反射机制)到内存。
 
-2) 调用set方法设置属性。
+![](.\images\spring生命周期.png)
 
-3) 如果实现了bean名字关注接口（BeanNameAware），则可以通过setBeanName获取id号。
+1. 实例化（当我们的程序加载beans.xml文件），把我们的bean（前提是scope=singleton）实例化(反射机制)到内存。
+2. 调用set方法设置属性。
 
-4) 如果实现了bean工厂关注接口（BeanFactoryAware），则可以获取BeanFactory。
+3. 如果实现了bean名字关注接口（BeanNameAware），则可以通过setBeanName获取id号。
 
-5) 如果实现了ApplicationContextAware接口，则调用方法setApplicationContext，该方法传递了ApplicationContext。
+4. 如果实现了bean工厂关注接口（BeanFactoryAware），则可以获取BeanFactory。
 
-6) 如果bean和一个后置处理器关联，则会自动去调用postProcessBeforeInitialization方法。
+5. 如果实现了ApplicationContextAware接口，则调用方法setApplicationContext，该方法传递了ApplicationContext。
+6. 如果bean和一个后置处理器关联，则会自动去调用postProcessBeforeInitialization方法。
+7. 如果实现了InitializingBean接口，则会调用afterPropertiesSet()方法
+8. 如果自己在<bean init-method="init" />则可以在bean定义自己的初始化方法
 
-7) 如果实现了InitializingBean接口，则会调用afterPropertiesSet()方法
+9. 如果bean和一个后置处理器关联，则会自动去调用BeanPostProcessor的后初始化方法(after)
 
-8) 如果自己在<bean init-method="init" />则可以在bean定义自己的初始化方法
+10. Bean可以使用了
 
-9) 如果bean和一个后置处理器关联，则会自动去调用BeanPostProcessor的后初始化方法(after)
+11. 容器关闭
 
-10) Bean可以使用了
+12. 可以通过调用DisposableBean的destory()方法
 
-11) 容器关闭
-
-12) 可以通过调用DisposableBean的destory()方法
-
-13) 可以在<bean destroy-method="fun1" />调用定制的销毁方法
+13. 可以在<bean destroy-method="fun1" />调用定制的销毁方法
 
 ## 3. 什么是控制反转(IOC)？什么是依赖注入？
 
@@ -2007,11 +2025,12 @@ JDK动态代理必须提供接口才能使用，在一些不能提供接口的�
 
 在Java中依赖注入有以下三种实现方式：
 
-构造器注入
+- 构造器注入
 
-Setter方法注入
+- Setter方法注入
 
-接口注入
+- 接口注入
+
 
 ## 4. 请解释下Spring框架中的IOC？
 
@@ -2029,11 +2048,11 @@ BeanFactory还能在实例化对象的时生成协作类之间的关系。此举
 
 从表面上看，application context如同bean factory一样具有bean定义、bean关联关系的设置，根据请求分发bean的功能。但application context在此基础上还提供了其他的功能。
 
-Ø 提供了支持国际化的文本消息
++ 提供了支持国际化的文本消息
 
-Ø 统一的资源文件读取方式
++ 统一的资源文件读取方式
 
-Ø 已在监听器中注册的bean的事件
++ 已在监听器中注册的bean的事件
 
 以下是三种较常见的 ApplicationContext 实现方式：
 
@@ -2057,35 +2076,25 @@ ApplicationContext context = new FileSystemXmlApplicationContext(“bean.xml”)
 
 Ø 基于Java的配置
 
-## 22. 构造方法注入和设值注入有什么区别？
+## 7. 构造方法注入和设值注入有什么区别？
 
-请注意以下明显的区别：
+## 8. Spring 框架中都用到了哪些设计模式？
 
-在设值注入方法支持大部分的依赖注入，如果我们仅需要注入int、string和long型的变量，我们不要用设值的方法注入。对于基本类型，如果我们没有注入的话，可以为基本类型设置默认值。在构造方法注入不支持大部分的依赖注入，因为在调用构造方法中必须传入正确的构造参数，否则的话为报错。
+[参考链接](https://juejin.im/post/5ce69379e51d455d877e0ca0)
 
-设值注入不会重写构造方法的值。如果我们对同一个变量同时使用了构造方法注入又使用了设置方法注入的话，那么构造方法将不能覆盖由设值方法注入的值。很明显，因为构造方法尽在对象被创建时调用。
+工厂模式：
 
-在使用设值注入时有可能还不能保证某种依赖是否已经被注入，也就是说这时对象的依赖关系有可能是不完整的。而在另一种情况下，构造器注入则不允许生成依赖关系不完整的对象。
+单例模式：
 
-在设值注入时如果对象A和对象B互相依赖，在创建对象A时Spring会抛出sObjectCurrentlyInCreationException异常，因为在B对象被创建之前A对象是不能被创建的，反之亦然。所以Spring用设值注入的方法解决了循环依赖的问题，因对象的设值方法是在对象被创建之前被调用的。
+代理模式：
 
-## 25. Spring 框架中都用到了哪些设计模式？
+模板方法：
 
-Spring框架中使用到了大量的设计模式，下面列举了比较有代表性的：
+适配器模式：
 
-代理模式—在AOP和remoting中被用的比较多。
+观察者模式：
 
-单例模式—在spring配置文件中定义的bean默认为单例模式。
-
-模板方法—用来解决代码重复的问题。比如**RestTemplate**、JmsTemplate、JpaTemplate。
-
-前端控制器—Spring提供了DispatcherServlet来对请求进行分发。
-
-视图帮助(View Helper )—Spring提供了一系列的JSP标签，高效宏来辅助将分散的代码整合在视图里。
-
-依赖注入—贯穿于BeanFactory / ApplicationContext接口的核心理念。
-
-工厂模式—BeanFactory用来创建对象的实例。
+装饰者模式：
 
 # 海量数据处理
 
@@ -2093,7 +2102,7 @@ Spring框架中使用到了大量的设计模式，下面列举了比较有代�
 
 分而治之+Hash
 
-1) IP地址最多有2^32=4G种取值情况，所以不能完全加载到内存中处理； 
+1) IP地址最多有$2^{32}$=4G种取值情况，所以不能完全加载到内存中处理； 
 
 2) 可以考虑采用“分而治之”的思想，按照IP地址的Hash(IP)%1024值，把海量IP日志分别存储到1024个小文件中。这样，每个小文件最多包含4MB个IP地址； 
 
@@ -2119,7 +2128,7 @@ Spring框架中使用到了大量的设计模式，下面列举了比较有代�
 
 ## 6. 在2.5亿个整数中找出不重复的整数，注：内存不足以容纳这2.5亿个整数
 
-**解法一**：采用2-Bitmap（每个数分配2bit，00表示不存在，01表示出现一次，10表示多次，11无意义）进行，共需内存2^32 * 2 bit=1 GB内存，还可以接受。然后扫描这2.5亿个整数，查看Bitmap中相对应位，如果是00变01，01变10，10保持不变。所描完事后，查看bitmap，把对应位是01的整数输出即可。
+**解法一**：采用2-Bitmap（每个数分配2bit，00表示不存在，01表示出现一次，10表示多次，11无意义）进行，共需内存$2^{32}$ * 2 bit=1 GB内存，还可以接受。然后扫描这2.5亿个整数，查看Bitmap中相对应位，如果是00变01，01变10，10保持不变。所描完事后，查看bitmap，把对应位是01的整数输出即可。
 
 **解法二**：也可采用与第1题类似的方法，进行划分小文件的方法。然后在小文件中找出不重复的整数，并排序。然后再进行归并，注意去除重复的元素。”
 
@@ -2139,14 +2148,12 @@ Spring框架中使用到了大量的设计模式，下面列举了比较有代�
 
 多态分为**编译时多态**和**运行时多态**。其中编译时多态是静态的，主要是指方法的**重载**，它是根据参数列表的不同来区分不同的函数，通过编译之后会变成两个不同的函数，在运行时谈不上多态。而运行时多态是动态的，它是通过动态绑定来实现的，也就是我们所说的多态性。
 
+**Java实现多态有三个必要条件：继承、重写、向上转型。**
 
-**Java**实现多态有三个必要条件：继承、重写、向上转型。**
+- **继承**：在多态中必须存在有继承关系的子类和父类。
+- **重写**：子类对父类中某些方法进行重新定义，在调用这些方法时就会调用子类的方法。
 
-**继承**：在多态中必须存在有继承关系的子类和父类。
-
-**重写**：子类对父类中某些方法进行重新定义，在调用这些方法时就会调用子类的方法。
-
-**向上转型**：在多态中需要将子类的引用赋给父类对象，只有这样该引用才能够具备技能调用父类的方法和子类的方法。
+- **向上转型**：在多态中需要将子类的引用赋给父类对象，只有这样该引用才能够具备技能调用父类的方法和子类的方法。
 
 只有满足了上述三个条件，我们才能够在同一个继承结构中使用统一的逻辑实现代码处理不同的对象，从而达到执行不同的行为。
 
@@ -2156,40 +2163,40 @@ Spring框架中使用到了大量的设计模式，下面列举了比较有代�
 
 在Java中有两种形式可以实现多态。继承和接口。
 
+```java
 class A{
 
-public String show(D obj){
+    public String show(D obj){
 
-return ("A and D");
+        return ("A and D");
+
+    }
+
+    public String show(A obj){
+
+        return ("A and A");
+
+    }
 
 }
 
-public String show(A obj){
 
-return ("A and A");
-
-}
-
-}
-
- 
 
 class B extends A{
 
-public String show(B obj){
+    public String show(B obj){
 
-return("B and B");
+        return("B and B");
+
+    }
+
+    public String show(A obj){
+
+        return("B and A");
+
+    }
 
 }
-
-public String show(A obj){
-
-return("B and A");
-
-}
-
-}
-
 
 class C extends B{}
 
@@ -2197,41 +2204,42 @@ class D extends B{}
 
 public class test25 {
 
-public static void main(String[] args) {
+    public static void main(String[] args) {
 
-A a1=new A();
+        A a1=new A();
 
-A a2=new B();
+        A a2=new B();
 
-B b=new B();
+        B b=new B();
 
-C c=new C();
+        C c=new C();
 
-D d=new D();
+        D d=new D();
 
- 
 
-System.out.println("1--"+a1.show(b));
 
-System.out.println("2--"+a1.show(c));
+        System.out.println("1--"+a1.show(b));
 
-System.out.println("3--"+a1.show(d));
+        System.out.println("2--"+a1.show(c));
 
-System.out.println("4--"+a2.show(b));
+        System.out.println("3--"+a1.show(d));
 
-System.out.println("5--"+a2.show(c));
+        System.out.println("4--"+a2.show(b));
 
-System.out.println("6--"+a2.show(d));
+        System.out.println("5--"+a2.show(c));
 
-System.out.println("7--"+b.show(b));
+        System.out.println("6--"+a2.show(d));
 
-System.out.println("8--"+b.show(c));
+        System.out.println("7--"+b.show(b));
 
-System.out.println("9--"+b.show(d));
+        System.out.println("8--"+b.show(c));
+
+        System.out.println("9--"+b.show(d));
+
+    }
 
 }
-
-}
+```
 
 结果为:
 
@@ -2749,17 +2757,61 @@ Collections是针对集合类的一个帮助类，它提供一系列静态方法
 
 # JVM底层技术
 
+## 1. 请介绍一下JVM内存结构？用过什么垃圾回收器？
+
+Java代码是要运行在虚拟机上的，而虚拟机在执行Java程序的过程中会把所管理的内存划分为若干个不同的数据区域，这些区域都有各自的用途。其中有些区域随着虚拟机进程的启动而存在，而有些区域则依赖用户线程的启动和结束而建立和销毁。
+
+**程序计数器**：可看作是当前线程所执行字节码得行号指示器，是线程私有的。唯一一个没有规定任何OOM错误情况的区域。
+
+**虚拟机栈**：Java虚拟机栈也是**线程私有的**，它的生命周期与线程相同。虚拟机栈描述的是Java方法执行的内存模型：每个方法在执行的同时都会创建一个栈帧用于存放局部变量、操作数栈、动态链接、方法出口等信息。一个方法的调用至到完成，对应着一个栈帧在虚拟机栈中入栈与出栈的过程。
+
+**本地方法栈**：本地方法栈与虚拟机栈发挥的作用相似，而本地方法栈是为虚拟机使用到的Native方法服务。
+
+**Java堆**：Java堆是被所有线程共享的一块最大的内存区域。基本上所有的对象实例与数组都在Java堆上分配。Java堆可以处于物理上不连续的内存空间中，其大小可拓展（通过-Xmx和-Xms控制）。
+
+**方法区**：方法区与Java堆一样，是所有线程共享的区域，用于存储已被虚拟机加载的**类信息**、**常量**、**静态变量**、**即时编译器编译后的代码**等数据。这区域的内存回收目标**主要是针对常量池的回收和对类型的卸载**。
+
+**运行时常量池**：运行时常量池是方法区的一部分，其用于存放编译期生成的各种**字面量**和**符号引用**。
+
+## 2. 介绍一下Java内存模型(JMM)
+
+Java程序是需要运行在Java虚拟机上面的，**Java内存模型（Java Memory Model ,JMM）就是一种符合内存模型规范的，屏蔽了各种硬件和操作系统的访问差异的，保证了Java程序在各种平台下对内存的访问都能保证效果一致的机制及规范。**
+
+**共享内存的正确性（可见性、有序性、原子性），内存模型定义了共享内存系统中多线程程序读写操作行为的规范。**
+
+Java内存模型规定了所有的变量都存储在主内存中，每条线程还有自己的工作内存，线程的工作内存中保存了该线程中是用到的变量的主内存副本拷贝，线程对变量的所有操作都必须在工作内存中进行，而不能直接读写主内存。不同的线程之间也无法直接访问对方工作内存中的变量，线程间变量的传递均需要自己的工作内存和主存之间进行数据同步进行。
+
+而**JMM就作用于工作内存和主存之间数据同步过程。他规定了如何做数据同步以及什么时候做数据同步**。![](./images/jmm.png)
+
+**总结下，JMM是一种规范，目的是解决由于多线程通过共享内存进行通信时，存在的本地内存数据不一致、编译器会对代码指令重排序、处理器会对代码乱序执行等带来的问题。**
+
+## 2. 线上发送频繁full gc如何处理？CPU使用率过高怎么办？如何定位问题？如何解决？说一下解决思路和处理方法。
+
+## 3. 知道字节码吗？字节码都有哪些？Integer X = 5,int y =5，比较x== y都经过哪些步骤？
+
+## 4. 讲讲类加载机制？都有哪些类加载器,这些类加载器都加载哪些文件？手写一下类加载Demo
+
+类加载机制主要采用得**双亲委托机制**。
+
+类加载器：引导类加载器、拓展类加载器、应用类加载器、自定义类加载器
+
+## 5. 知道osgi吗？他是如何实现的？？
+
+## 6. 请问你做过哪些JVM优化？使用什么方法？达到什么效果？
+
+## 7. Class.forName("java. lang. String")和String.class.getClassLoader().loadClass ("java.lang.String")什么区别？
+
 ## 1. 类加载过程
 
 • **加载:**查找并加载类的二进制数据
 
 • **连接**：
 
-  -验证:确保被加载的类的正确性
+- 验证:确保被加载的类的正确性
 
-  -准备:为类的静态变量分配内存，并将其初始化为默认值
+- 准备:为类的静态变量分配内存，并将其初始化为默认值
 
- -解析:把类中的符号引用转换为直接引用
+- 解析:把类中的符号引用转换为直接引用
 
 • **初始化:**为类的静态变量赋予正确的初始值
 
@@ -2787,7 +2839,7 @@ Collections是针对集合类的一个帮助类，它提供一系列静态方法
 
 **栈区**：
 
-栈分为**java**虚拟机栈**和**本地方法栈**
+栈分为**java虚拟机栈**和**本地方法栈**
 
 重点是Java虚拟机栈，它是线程私有的，生命周期与线程相同。
 
@@ -2815,7 +2867,7 @@ Collections是针对集合类的一个帮助类，它提供一系列静态方法
 
 常量池用于存放编译期生成的各种字节码和符号引用，常量池具有一定的动态性，里面可以存放编译期生成的常量；运行期间的常量也可以添加进入常量池中，比如string的intern()方法。
 
-程序计数器：
+**程序计数器**：
 
 当前线程所执行的行号指示器。通过改变计数器的值来确定下一条指令，比如循环，分支，跳转，异常处理，线程恢复等都是依赖计数器来完成。
 
@@ -3642,22 +3694,6 @@ hashcode相等两个类不一定相等；equals为true两个类也不一定完�
 ## 10. cas知道吗？如何实现的？
 
 ## 11. 请用至少四种写法写一个单例模式呗？？
-
-# JVM
-
-## 1. 请介绍一下JVM内存模型？用过什么垃圾回收器？
-
-## 2. 线上发送频繁full gc如何处理？ CPU 使用率过高怎么办？如何定位问题？如何解决？说一下 解决思路和处理方法.
-
-## 3. 知道字节码吗？字节码都有哪些？Integer X = 5,int y =5，比较x== y都经过哪些步骤？
-
-## 4. 讲讲类加载机制？都有哪些类加载器,这些类加载器都加载哪些文件？手写一下类加载Demo
-
-## 5. 知道osgi吗？他是如何实现的？？
-
-## 6. 请问你做过哪些JVM优化？使用什么方法？达到什么效果？
-
-## 7. Class.forName("java. lang. String")和String.class.getClassLoader().loadClass ("java.lang.String")什么区别？
 
 # 分布式缓存
 
