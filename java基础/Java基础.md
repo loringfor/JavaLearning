@@ -1206,10 +1206,10 @@ InnoDB：支持
      **缺点**：
 
 	  * 热点数据成为性能瓶颈。连续分片可能存在数据热点，例如按时间字段分片，有些分片存储最近时间段内的数据，可能会被频繁的读写，而有些分片存储的历史数据，则很少被查询。
-    
+   
 	- **Hash取模**：一个商场系统，一般都是将用户，订单作为主表，然后将和它们相关的作为附表，这样不会造成跨库事务之类的问题。 取用户id，然后hash取模，分配到不同的数据库上。
 	  **优点**：
-    
+   
    - 数据分片相对比较均匀，不容易出现热点和并发访问的瓶颈
      
      **缺点**：
@@ -2762,13 +2762,13 @@ Collections是针对集合类的一个帮助类，它提供一系列静态方法
 
 # JVM底层技术
 
-## 1. 请介绍一下JVM内存结构？用过什么垃圾回收器？
+## 1. 请介绍一下JVM内存结构？
 
 Java代码是要运行在虚拟机上的，而虚拟机在执行Java程序的过程中会把所管理的内存划分为若干个不同的数据区域，这些区域都有各自的用途。其中有些区域随着虚拟机进程的启动而存在，而有些区域则依赖用户线程的启动和结束而建立和销毁。
 
 **程序计数器**：可看作是当前线程所执行字节码得行号指示器，是线程私有的。唯一一个没有规定任何OOM错误情况的区域。
 
-**虚拟机栈**：Java虚拟机栈也是**线程私有的**，它的生命周期与线程相同。虚拟机栈描述的是Java方法执行的内存模型：每个方法在执行的同时都会创建一个栈帧用于存放局部变量、操作数栈、动态链接、方法出口等信息。一个方法的调用至到完成，对应着一个栈帧在虚拟机栈中入栈与出栈的过程。
+**虚拟机栈**：Java虚拟机栈也是**线程私有的**，它的生命周期与线程相同。虚拟机栈描述的是Java方法执行的内存模型：每个方法在执行的同时都会创建一个栈帧用于存放**局部变量、操作数栈、动态链接、方法出口**等信息。一个方法的调用至到完成，对应着一个栈帧在虚拟机栈中入栈与出栈的过程。
 
 **本地方法栈**：本地方法栈与虚拟机栈发挥的作用相似，而本地方法栈是为虚拟机使用到的Native方法服务。
 
@@ -2778,7 +2778,33 @@ Java代码是要运行在虚拟机上的，而虚拟机在执行Java程序的过
 
 **运行时常量池**：运行时常量池是方法区的一部分，其用于存放编译期生成的各种**字面量**和**符号引用**。
 
-## 2. 介绍一下Java内存模型(JMM)
+## 2. 用过什么垃圾回收器？
+
+**CMS（Concurrent Mark Sweep）**收集器是一种以**获取最短回收停顿时间**为目标的收集器，它非常符合那些集中在互联网站或者B/S系统的服务端上的Java应用，这些应用都非常重视服务的响应速度。从名字上（“Mark Sweep”）就可以看出它是基于**“标记-清除”**算法实现的。
+
+CMS收集器工作的整个流程分为以下4个步骤：
+
+- **初始标记（CMS initial mark）**：仅仅只是标记一下GC Roots能直接关联到的对象，速度很快，需要“Stop The World”。
+
+- **并发标记（CMS concurrent mark）**：进行**GC Roots Tracing**的过程，在整个过程中耗时最长。
+
+- **重新标记（CMS remark）**：为了修正并发标记期间因用户程序继续运作而导致标记产生变动的那一部分对象的标记记录，这个阶段的停顿时间一般会比初始标记阶段稍长一些，但远比并发标记的时间短。此阶段也需要“Stop The World”。
+
+- **并发清除（CMS concurrent sweep）**
+
+  ![](.\images\CMS.png)
+
+  **优点**
+
+  ​		CMS是一款优秀的收集器，它的主要**优点**在名字上已经体现出来了：**并发收集**、**低停顿**，因此CMS收集器也被称为**并发低停顿收集器（Concurrent Low Pause Collector）**。
+
+  **缺点**
+
+  - **对CPU资源非常敏感** 其实，面向并发设计的程序都对CPU资源比较敏感。在并发阶段，它虽然不会导致用户线程停顿，但会因为占用了一部分线程（或者说CPU资源）而导致应用程序变慢，总吞吐量会降低。**CMS默认启动的回收线程数是（CPU数量+3）/4**，也就是当CPU在4个以上时，并发回收时垃圾收集线程不少于25%的CPU资源，并且随着CPU数量的增加而下降。但是**当CPU不足4个时（比如2个），CMS对用户程序的影响就可能变得很大**，如果本来CPU负载就比较大，还要分出一半的运算能力去执行收集器线程，就可能导致用户程序的执行速度忽然降低了50%，其实也让人无法接受。
+  - **无法处理浮动垃圾（Floating Garbage）** 可能出现“Concurrent Mode Failure”失败而导致另一次Full GC的产生。**由于CMS并发清理阶段用户线程还在运行着，伴随程序运行自然就还会有新的垃圾不断产生。**这一部分垃圾出现在标记过程之后，CMS无法再当次收集中处理掉它们，只好留待下一次GC时再清理掉。这一部分垃圾就被称为**“浮动垃圾”**。也是由于在垃圾收集阶段用户线程还需要运行，那也就还需要预留有足够的内存空间给用户线程使用，因此CMS收集器不能像其他收集器那样等到老年代几乎完全被填满了再进行收集，需要预留一部分空间提供并发收集时的程序运作使用。
+  - **标记-清除算法导致的空间碎片** CMS是一款基于“标记-清除”算法实现的收集器，这意味着收集结束时会有大量空间碎片产生。空间碎片过多时，将会给大对象分配带来很大麻烦，往往出现老年代空间剩余，但无法找到足够大连续空间来分配当前对象。
+
+## 3. 介绍一下Java内存模型(JMM)
 
 Java程序是需要运行在Java虚拟机上面的，**Java内存模型（Java Memory Model ,JMM）就是一种符合内存模型规范的，屏蔽了各种硬件和操作系统的访问差异的，保证了Java程序在各种平台下对内存的访问都能保证效果一致的机制及规范。**
 
@@ -2790,57 +2816,198 @@ Java内存模型规定了所有的变量都存储在主内存中，每条线程�
 
 **总结下，JMM是一种规范，目的是解决由于多线程通过共享内存进行通信时，存在的本地内存数据不一致、编译器会对代码指令重排序、处理器会对代码乱序执行等带来的问题。**
 
-## 2. 线上发送频繁full gc如何处理？CPU使用率过高怎么办？如何定位问题？如何解决？说一下解决思路和处理方法。
+## 4. 内存分配策略
+
+- **对象优先在Eden分配**，当Eden区没有足够空间进行分配时，虚拟机将发起一次Minor GC。
+- **大对象直接进入老年代**。大对象是指需要大量连续内存空间的Java对象，最典型的大对象就是那种**很长的字符串**以及**数组**，虚拟机提供一个-XX:PretenureSizeThreshold参数，令大于这个设置值的对象直接在老年代分配，这样做避免在Eden区及两个Survivor区之间发生大量的内存复制。
+- **长期存活的对象将进入老年代**，年龄计数器，每经过一次Minor GC，年龄就增加1岁。
+- **动态对象年龄判断**：并不是所有对象的年龄达到阈值才能晋升老年代，如果在Survivor空间中相同年龄所有对象大小的总和大于Survivor空间的一半，年龄大于或等于该年龄的对象就可以直接进入老年代。
+- **空间分配担保**
+
+## 5. 线上发送频繁full gc如何处理？
+
+**查看GC日志，定位问题**
+
+可能原因：使用了大对象，如很长的字符串与数组；在程序中长期持有了对象的引用
+
+## 6. CPU使用率过高怎么办？如何定位问题？如何解决？说一下解决思路和处理方法。
+
+[参考链接](https://www.cnblogs.com/myseries/p/11230839.html)
+
+1. ​	定位进程：top命令
+2. ​	定位线程：top -Hp 1893 （查看1893进程中的线程）
+3. ​	定位代码：printf %x 4519 （把有问题的4519线程转成16进制）
+4. ​	通过jstack命令，查看栈信息：`sudo -u admin  jstack 1893 |grep -A 200 11a7`
 
 ## 3. 知道字节码吗？字节码都有哪些？Integer X = 5,int y =5，比较x== y都经过哪些步骤？
 
+​	这两个数据的相互比较，无论是谁和谁比，都**最终比较的是存在栈中的值**，因为int是基本数据类型，不能在堆中创建数据，所以无论咋比较，都是将堆中的Integer拆箱（xx.intValue）为int类型的数据，然后进行比较 
+int和integer(无论new否)比，都为true，因为会把Integer自动拆箱为int再去比
+
 ## 4. 讲讲类加载机制？都有哪些类加载器,这些类加载器都加载哪些文件？手写一下类加载Demo
 
-类加载机制主要采用得**双亲委托机制**。
+类加载机制主要采用的**双亲委托机制**。
 
-类加载器：引导类加载器、拓展类加载器、应用类加载器、自定义类加载器
+**类加载器**：引导类加载器、拓展类加载器、应用类加载器、自定义类加载器
 
-## 5. 知道osgi吗？他是如何实现的？？
+- **启动类加载器Bootstrap classLoader**:主要负责加载核心的类库(java.lang.*等)，构造ExtClassLoader和APPClassLoader。
+
+- **拓展类加载器ExtClassLoader**：主要负责加载jre/lib/ext目录下的一些扩展的jar。
+
+- **应用程序类加载器AppClassLoader**：主要负责加载应用程序的主函数类 
+
+  
+
+**手写一个类加载Demo**
+
+  首先要继承ClassLoader类，自己实现一个类加载器不是去覆盖loadClass()方法，而是应该把自己的类加载逻辑写到findClass()方法中，在loadClass()方法的逻辑里如果父类加载失败，则会调用自己的findClass()方法来完成加载。
+
+```java
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+/**
+ * 自定义文件系统类加载器
+ */
+public class FileSystemClassLoader extends ClassLoader {
+    //com.bjsxt.test.User   --> d:/myjava/  com/bjsxt/test/User.class
+    private String rootDir;
+    public FileSystemClassLoader(String rootDir){
+        this.rootDir = rootDir;
+    }
+
+    @Override
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
+        //应该要先查询有没有加载过这个类。如果已经加载，则直接返回加载好的类。如果没有，则加载新的类。
+        Class<?> c = findLoadedClass(name);
+        if(c!=null){
+            return c;
+        }else{
+            ClassLoader parent = this.getParent();
+            System.out.println(parent);
+            try {
+                c = parent.loadClass(name);	   //委派给父类加载
+            } catch (Exception e) {
+				e.printStackTrace();
+            }
+            if(c!=null){
+                return c;
+            }else{
+                byte[] classData = getClassData(name);
+                if(classData==null){
+                    throw new ClassNotFoundException();
+                }else{
+                    c = defineClass(name, classData, 0,classData.length);
+                }
+            }
+        }
+        return c;
+    }
+
+    private byte[] getClassData(String classname){
+        String path = rootDir +"/"+ classname.replace('.', '/')+".class";
+		//IOUtils,可以使用它将流中的数据转成字节数组
+        InputStream is = null;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try{
+            is  = new FileInputStream(path);
+            byte[] buffer = new byte[1024];
+            int temp=0;
+            while((temp=is.read(buffer))!=-1){
+                baos.write(buffer, 0, temp);
+            }
+            return baos.toByteArray();
+        }catch(Exception e){
+            e.printStackTrace();
+            return null;
+        }finally{
+            try {
+                if(is!=null){
+                    is.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                if(baos!=null){
+                    baos.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+
+
+## 5. 知道osgi吗？他是如何实现的？
 
 ## 6. 请问你做过哪些JVM优化？使用什么方法？达到什么效果？
 
-## 7. Class.forName("java. lang. String")和String.class.getClassLoader().loadClass ("java.lang.String")什么区别？
+## 7. Class.forName("java. lang. String")和String.class. getClassLoader().loadClass ("java.lang.String")什么区别？
 
-## 1. 类加载过程
+**类装载**的两种方式：
 
-• **加载:**查找并加载类的二进制数据
+1. Class c1 = Class.forName ("java.lang.String");  // 反射
 
-• **连接**：
+2. ClassLoader c1 = new  ClassLoader(); 
 
-- 验证:确保被加载的类的正确性
+   Class c1.loadClass( String name, boolean resolve );
 
-- 准备:为类的静态变量分配内存，并将其初始化为默认值
+**区别一**：Class.forName是从指定的classloader中装载类,如果没有指定,也就是一个参数的时候,是从装载当前对象实例所在的classloader中装载类。而ClassLoader的实例调用loadclass方法,是指从当前ClassLoader实例中调用类,而这个实例与装载当前所在类实例的Classloader也许不是同一个。说白了就是他们**实现装载的时候，使用的类装载器的指定是不同的**。
 
-- 解析:把类中的符号引用转换为直接引用
+**区别二**：Class.forName(className)实际上是调用Class.forName(className, true, this.getClass(). getClassLoader())。注意第二个参数，是指Class被loading后是不是必须被初始化。ClassLoader.loadClass (className)实际上调用的是ClassLoader.loadClass(name, false)，第二个参数指出Class是否被链接（不连接也不会初始化）。区别就出来了。**Class.forName(className)装载的class已经被实例化，而ClassLoader.loadClass(className)装载的class还没有被连接，所以就更谈不上实例化了**。
 
-• **初始化:**为类的静态变量赋予正确的初始值
+一般情况下，这两个方法效果一样，都能装载Class。但如果程序需要Class被实例化，就必须用Class.forName(name)了。
 
-• **使用**
+## 8. 锁优化
 
-**•** **卸载**
+- **适应性自旋**
+- **锁消除**：判断数据是否存在共享与竞争，判定来源于逃逸分析的数据支持，如果判断在一段代码中，堆上的所有数据都不会逃逸出去从而被其他线程访问到，则把它当做栈上的数据对待，认为它是线程私有的。
+- **锁粗化**：如果一系列的连续操作都对同一个对象反复加锁和解锁，甚至加锁操作是出现在循环体中的，那即使没有线程竞争，频繁的互斥操作也会导致不必要的性能损耗。
+- **轻量级锁**：轻量级锁并不是用来代替重量级锁，它的本意是在没有多线程竞争的前提下，减少传统的重量级锁使用操作系统互斥量产生的性能消耗。
+- **偏向锁**
 
-## 2. 深入理解类加载器
 
-## 3. gc的概念，如果A和B对象循环引用，是否可以被GC？
+
+## 9. 类加载过程
+
+1. **加载:**查找并加载类的二进制数据
+2. **连接**：
+   - 验证:确保被加载的类的正确性
+
+   - 准备:为类的静态变量分配内存，并将其初始化为默认值
+
+   - 解析:把类中的符号引用转换为直接引用
+
+4. **初始化:**为类的静态变量赋予正确的初始值
+5. **使用**
+6. **卸载**
+
+## 10. 深入理解类加载器
+
+- 类的加载是放到Java虚拟机外部去实现，以便让应用程序自己决定如何去获取所需要的类。
+- 对于任意一个类，都需要由加载它的类加载器和这个类本身一同确立其在Java虚拟机中的唯一性，每一个类加载器，都拥有一个独立的类名称空间。
+
+## 11. gc的概念，如果A和B对象循环引用，是否可以被GC？
 
 如果采用引用计数法，那么循环引用便不能被GC 
 
-## 4. jvm gc如何判断对象是否需要回收，有哪几种方式？
+## 12. jvm gc如何判断对象是否需要回收，有哪几种方式？
 
 引用计数法；
 
 可达性分析算法：虚拟机栈（栈帧中的本地变量表）中引用的对象；方法区静态属性引用的对象；方法区中常量引用的对象；本地方法栈中JNI（即一般说的Native方法）引用的对象。
 
-## 5. Java中能不能主动触发GC
+## 13. Java中能不能主动触发GC
 
 不能
 
-## 6. JVM的内存结构，堆和栈的区别
+## 14. JVM的内存结构，堆和栈的区别
 
 **栈区**：
 
@@ -2880,7 +3047,7 @@ Java虚拟机多线程是通过线程轮流切换并分配处理器执行时间�
 
 唯一一块Java虚拟机没有规定任何OutofMemoryError的区块。
 
-## 7. JVM堆的分代
+## 15. JVM堆的分代
 
 **新生代**：新生代又分为Eden区放新创建对象、From survivor 和 To survivor 保存GC后幸存下的对象，默认情况下各自占比 8:1:1。
 
@@ -2888,21 +3055,21 @@ Java虚拟机多线程是通过线程轮流切换并分配处理器执行时间�
 
 **永久代**：方法区
 
-## 8. Minor GC、Major GC和Full GC之间的区别
+## 16. Minor GC、Major GC和Full GC之间的区别
 
-**Minor GC****：从年轻代空间（包括 Eden 和 Survivor 区域）回收内存被称为 Minor GC,因为 Java 对象大多都具备朝生夕灭的特性，所以 Minor GC 非常频繁，一般回收速度也比较快。
+**Minor GC**：从年轻代空间（包括 Eden 和 Survivor 区域）回收内存被称为 Minor GC,因为 Java 对象大多都具备朝生夕灭的特性，所以 Minor GC 非常频繁，一般回收速度也比较快。
 
 **Major GC**：指发生在老年代的 GC，出现了 Major GC，经常会伴随至少一次的 Minor GC（但非绝对的，ParallelScavenge 收集器的收集策略里就有直接进行 Major GC 的策略选择过程） 。MajorGC 的速度一般会比 Minor GC 慢 10倍以上。
 
-**Full GC****：是清理整个堆空间—包括年轻代和永久代。
+**Full GC**：是清理整个堆空间—包括年轻代和永久代。
 
- 
 
-**Minor GC**触发机制**：
+
+**Minor GC触发机制**：
 
 当年轻代满时就会触发Minor GC，这里的年轻代满指的是Eden代满，Survivor满不会引发GC。 
 
-**Full GC**触发机制**：
+**Full GC触发机制**：
 
 （1）调用System.gc时，系统建议执行Full GC，但是不必然执行
 
@@ -2916,31 +3083,15 @@ Java虚拟机多线程是通过线程轮流切换并分配处理器执行时间�
 
  
 
-## 9. Java中的内存溢出是什么，和内存泄露有什么关系
+## 17. Java中的内存溢出是什么，和内存泄露有什么关系
 
 **内存溢出 out of memory**，是指程序在申请内存时，没有足够的内存空间供其使用，出现out of memory；比如申请了一个integer,但给它存了long才能存下的数，那就是内存溢出。
 
- 
-
 **内存泄露 memory leak**，是指程序在申请内存后，无法释放已申请的内存空间，一次内存泄露危害可以忽略，但内存泄露堆积后果很严重，无论多少内存,迟早会被占光。
 
-## 10. Java的类加载机制，什么是双亲委派机制？
+## 18. Java的类加载机制，什么是双亲委派机制？
 
 双亲委派机制是为了保证java核心库的类型安全；这种机制就保证不会出现用户能定义java.lang.Object类的情况
-
-  
-
-l Bootstrap classLoader:主要负责加载核心的类库(java.lang.*等)，构造ExtClassLoader和APPClassLoader。
-
-l ExtClassLoader：主要负责加载jre/lib/ext目录下的一些扩展的jar。
-
-l AppClassLoader：主要负责加载应用程序的主函数类
-
-## 11. ClassLoader的类加载方式
-
- 
-
- 
 
 # IO
 

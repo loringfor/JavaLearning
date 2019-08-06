@@ -22,9 +22,9 @@ public class 喝咖啡{
             for(int i=0;i<N;i++)
                 bugTime+=bug[i];
 
-            int sunTime =X*60*A + 60*(8-X);
+            int sumTime =X*60*A + 60*(8-X);
             int coffeeTime = X*60*A;
-            if(bugTime>sunTime)
+            if(bugTime>sumTime)
                 System.out.println(0);
             else{
                 if(bugTime<=coffeeTime){

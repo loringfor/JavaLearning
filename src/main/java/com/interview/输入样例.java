@@ -1,13 +1,9 @@
 package com.interview;
 
-import java.util.Scanner;
+import java.util.*;
 
 public class 输入样例 {
     public static void main(String[] args) {
-//        3 4
-//        ABC ABC
-//        ABC
-//        DEF
         Scanner in = new Scanner(System.in);
         while (in.hasNext()){
             int len = in.nextInt();

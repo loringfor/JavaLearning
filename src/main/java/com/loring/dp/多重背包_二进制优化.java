@@ -1,7 +1,8 @@
-package com.interview.大疆;
+package com.loring.dp;
 
 import java.util.*;
-public class 多重背包 {
+public class 多重背包_二进制优化{
+
     /**
      * 多重背包，采用二进制优化
      */
@@ -19,7 +20,7 @@ public class 多重背包 {
         // 物品种类
         int len = 0;
         // 背包容积
-        int bag = 0;
+        int bag = 0; 
         ArrayList<Item> items = new ArrayList<Item>();
         int weight = 0,value = 0,num = 0;
 
