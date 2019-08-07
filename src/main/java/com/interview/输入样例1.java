@@ -2,7 +2,7 @@ package com.interview;
 
 import java.util.*;
 
-public class 输入样例 {
+public class 输入样例1 {
     public static void main(String[] args) {
         Scanner in = new Scanner(System.in);
         while (in.hasNext()){
