@@ -4,8 +4,10 @@ import java.util.Random;
 import java.util.Scanner;
 
 class Node {
-    public int value;  // 结点值
-    public Node next;  //　结点的next
+    // 结点值
+    public int value;
+    //　结点的next
+    public Node next;
 
     public Node() {}
 
@@ -15,7 +17,36 @@ class Node {
 }
 
 
-public class ReverseLink {
+public class 部分反转链表 {
+    /**
+     * 翻转链表的从结点m到结点n的部分
+     *
+     * @param head 连标点额头结点
+     * @param from 翻转的开始位置
+     * @param to 翻转的结束位置
+     * @return 翻转后的新链表
+     */
+    public static void reverse(Node head, int from, int to) {
+        if (from >= to) return;
+        Node cur = head.next;
+        int i;
+        for (i = 0; i < from - 1; i++) {
+            head = cur;
+            cur = cur.next;
+        }
+        Node pre = cur;
+        cur = cur.next;
+        to--;
+        Node next;
+        for (; i < to; i++) {
+            next = cur.next;
+            cur.next = head.next;  // 采用头插法
+            head.next = cur;
+            pre.next = next;
+            cur = next;
+        }
+    }
+
     public static void main(String[] args) {
         int m, n;  // 输入要改变部分的链表起始位置和结束位置
         int len = 0;
@@ -27,7 +58,8 @@ public class ReverseLink {
         Node pre = head;
         for (int i = 0; i < 20; i++) {
             Node node = new Node(i+1);
-            pre.next = node;  // 尾插法构建链表
+            // 尾插法构建链表
+            pre.next = node;
             pre = node;
         }
         System.out.print("原链表：");
@@ -74,33 +106,5 @@ public class ReverseLink {
         return len;
     }
 
-    /**
-     * 翻转链表的从结点m到结点n的部分
-     *
-     * @param head 连标点额头结点
-     * @param m 翻转的开始位置
-     * @param n 翻转的结束位置
-     * @return 翻转后的新链表
-     */
-    public static void reverse(Node head, int from, int to) {
-        if (from >= to) return;
-        Node cur = head.next;
-        int i;
-        for (i = 0; i < from - 1; i++) {
-            head = cur;
-            cur = cur.next;
-        }
-        Node pre = cur;
-        cur = cur.next;
-        to--;
-        Node next;
-        for (; i < to; i++) {
-            next = cur.next;
-            cur.next = head.next;  // 采用头插法
-            head.next = cur;
-            pre.next = next;
-            cur = next;
-        }
-    }
 }
 

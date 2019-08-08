@@ -172,13 +172,11 @@ total:17228K bytes allocated + 5396K reserved=22626K used，29548K available.
 
 **一些结论**：
 
-① 基本有序的情况下，**插入排序**效率最高 
+- 基本有序的情况下，**插入排序**效率最高 
 
-② **冒泡排序**，**插入排序**和**快速排序**的排序趟数与序列的初始状态有关
-
-③ **堆排序**和**选择排序**的排序次数与初始状态无关，即最好情况和最坏情况都一样
-
-
+- **冒泡排序**，**插入排序**和**快速排序**的排序趟数与序列的初始状态**有关**
+- **堆排序**和**选择排序**的排序次数与初始状态无关，即最好情况和最坏情况都一样
+- 最大/小堆，初始化**建堆**的时间复杂度为O(n)，**插入**与**查找**时间复杂度为($logn$)，**删除**的时间复杂度为O(1)
 
 ## 4. 单链表的遍历和逆序，部分链表的反转
 
@@ -1542,13 +1540,14 @@ public class Singleton5 {
      **抽象工厂模式**
      不可以增加产品，可以增加产品族! 
 
-应用场景
-    * JDK中Calendar的getInstance方法
-        * JDBC中Connection对象的获取
-        * Hibernate中SessionFactory创建Session
-        * spring中IOC容器创建管理bean对象
-        * XML解析时的DocumentBuilderFactory创建解析器对象
-        * 反射中Class对象的newInstance()
+**应用场景**
+
+* JDK中Calendar的getInstance方法
+* JDBC中Connection对象的获取
+* Hibernate中SessionFactory创建Session
+* spring中IOC容器创建管理bean对象
+* XML解析时的DocumentBuilderFactory创建解析器对象
+* 反射中Class对象的newInstance()
 
 # Java高级多线程
 

@@ -32,24 +32,19 @@ public class 去重 {
 
             StringBuilder builder = new StringBuilder();
             Iterator iterator = map.entrySet().iterator();
-            int count=0;
             while (iterator.hasNext()){
                 Map.Entry<String,Integer> entry = (Map.Entry<String,Integer>)iterator.next();
                 String key = entry.getKey();
                 int value =entry.getValue();
-//                count++;
-//                if(count!=map.size())
-//                    System.out.print(key+":"+value+",");
-//                else
-//                    System.out.println(key+":"+value);
-                if(value>0)
+                if(value>0){
                     builder.append(key+":"+value+",");
+                }
             }
             String temp =builder.toString();
-
             String res="";
-            if(temp.length()>1)
+            if(temp.length()>1){
                 res = temp.substring(0,temp.length()-1);
+            }
             System.out.println(res);
         }
     }

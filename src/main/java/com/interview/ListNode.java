@@ -1,4 +1,4 @@
-package com.loring.base;
+package com.interview;
 
 public class ListNode {
     int val;
