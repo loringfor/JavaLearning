@@ -5,16 +5,18 @@ import java.util.*;
 public class Main2 {
 
     public static int core(int[] nums) {
-
+        if(nums==null || nums.length<1){
+            return 0;
+        }
         int[] dp = new int[nums.length];
-        int len = 0;
-        for (int num : nums) {
-            int i = Arrays.binarySearch(dp, 0, len, num);
-            if (i < 0) {
-                i = -(i + 1);
+        int len=0;
+        for(int i=0;i<nums.length;i++){
+            int index = Arrays.binarySearch(dp,0,len,nums[i]);
+            if(index<0){
+                index =-(index+1);
             }
-            dp[i] = num;
-            if (i == len) {
+            dp[index]=nums[i];
+            if(len==index){
                 len++;
             }
         }
