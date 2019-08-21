@@ -7,8 +7,9 @@ public class 组合总和39 {
 
     public static List<List<Integer>> combinationSum(int[] candidates, int target) {
         List<List<Integer>> res = new ArrayList();
-        if(candidates==null || candidates.length<1)
+        if(candidates==null || candidates.length<1){
             return res;
+        }
         Arrays.sort(candidates);
         findCombination(res,candidates,target,0,new Stack<Integer>());
         return res;
