@@ -2156,6 +2156,30 @@ ApplicationContext context = new FileSystemXmlApplicationContext(“bean.xml”)
 
 装饰者模式：
 
+## 9.SpringBoot如何实现自动配置
+
+SpringBoot配置包括**外化配置**与**自动配置**
+
+**外化配置**：主要用于读取一些自定义配置文件或application.yml文件等，Spring Boot可以通过**@PropertySource**,**@Value**,**@Environment**,**@ConfigurationProperties**来绑定变量。
+
+**自动配置**：
+
+<https://segmentfault.com/a/1190000018011535>
+
+@SpringBootApplication等同于下面三个注解：
+
+- **@SpringBootConfiguration**：我们点进去以后可以发现底层是**Configuration**注解，说白了就是支持**JavaConfig**的方式来进行配置(**使用Configuration配置类等同于XML文件**)。
+
+- **@EnableAutoConfiguration**：开启**自动配置**功能，其下面主要有两个重要的注解，分别为@AutoConfigurationPackage：自动配置包；@Import：给IOC容器导入组件。
+
+  > 通过@EnableAutoConfiguration启用Spring应用程序上下文的自动配置，这个注解会导入一个EnableAutoConfigurationImportSelector的类,而这个类会去读取一个spring.factories下key为EnableAutoConfiguration对应的全限定名的值。
+  >
+  > 这个spring.factories里面配置的那些类，主要作用是告诉Spring Boot这个stareter所需要加载的那些xxxAutoConfiguration类，也就是你真正的要自动注册的那些bean或功能。然后，我们实现一个spring.factories指定的类，标上@Configuration注解，一个starter就定义完了。
+
+- **@ComponentScan**：这个注解，学过Spring的同学应该对它不会陌生，就是**扫描**注解，默认是扫描**当前类下**的package。将@Controller/@Service/@Component/@Repository等注解加载到IOC容器中。
+
+其中@EnableAutoConfiguration是关键(启用自动配置)，内部实际上就去加载`META-INF/spring.factories`文件的信息，然后筛选出以EnableAutoConfiguration为key的数据，加载到IOC容器中，实现自动配置功能！
+
 # 海量数据处理
 
 ## 1. 海量日志数据，如何提取出某日访问淘宝次数最多的IP？
