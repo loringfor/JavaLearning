@@ -1,7 +1,6 @@
 package com.interview.剑指offer;
 
 import com.interview.TreeNode;
-
 import java.util.*;
 
 public class 序列化二叉树 {
