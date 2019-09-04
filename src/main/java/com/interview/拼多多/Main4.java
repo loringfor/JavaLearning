@@ -3,27 +3,31 @@ package com.interview.拼多多;
 import java.util.*;
 
 public class Main4 {
-    public static void main(String[] args){
-        Scanner in = new Scanner(System.in);
-        while(in.hasNext()){
-            // 5
-            int N = in.nextInt();
-            boolean[] flag = new boolean[N];
-            // 4
-            int M = in.nextInt();
-            List<int[]> list = new ArrayList<>();
-            for (int i=0;i<M;i++){
-                int[] temp = {in.nextInt(),in.nextInt()};
-                list.add(temp);
-            }
+        public static void main(String[] args) {
+            Scanner in = new Scanner(System.in);
+            while (in.hasNext()){
+                int n = in.nextInt();
+                int m = in.nextInt();
+                int k = in.nextInt();
 
-            if(M==0){
-                System.out.println(N);
-            }else{
-
-            }
-
-
+                PriorityQueue<Integer> queue = new PriorityQueue<>(k);
+                int count=0;
+                int temp = (int)Math.sqrt(k);
+                for(int i=n;i>=temp;i--){
+                    for(int j=m;j>=temp;j--){
+                        int num = i*j;
+                        if(count<k){
+                            queue.add(num);
+                            count++;
+                        }else{
+                            if(num>queue.peek()){
+                                queue.poll();
+                                queue.add(num);
+                            }
+                        }
+                    }
+                }
+                System.out.println(queue.peek());
         }
     }
 }

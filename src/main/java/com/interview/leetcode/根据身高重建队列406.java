@@ -6,8 +6,16 @@ import java.util.Comparator;
 import java.util.List;
 
 public class 根据身高重建队列406 {
+//    输入:
+//          [[7,0], [4,4], [7,1], [5,0], [6,1], [5,2]]
+//
+//    输出:
+//          [[5,0], [7,0], [5,2], [6,1], [4,4], [7,1]]
+
     public int[][] reconstructQueue(int[][] people) {
-        if (0 == people.length || 0 == people[0].length) return new int[0][0];
+        if (0 == people.length || 0 == people[0].length) {
+            return new int[0][0];
+        }
         //按照身高降序 K升序排序
         Arrays.sort(people, new Comparator<int[]>() {
             @Override

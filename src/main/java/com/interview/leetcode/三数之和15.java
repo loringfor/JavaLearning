@@ -4,6 +4,7 @@ import java.util.*;
 
 public class 三数之和15 {
 
+    // 找出三数之和为0
     public static List<List<Integer>> threeSum(int[] nums) {
         int len=nums.length;
         List<List<Integer>> resList = new ArrayList();

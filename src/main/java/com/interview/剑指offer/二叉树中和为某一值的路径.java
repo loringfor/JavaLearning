@@ -3,6 +3,7 @@ package com.interview.剑指offer;
 import com.interview.TreeNode;
 import java.util.*;
 
+// 与leetcode437题路径总和有区别
 public class 二叉树中和为某一值的路径 {
 
     ArrayList<ArrayList<Integer>> listAll = new ArrayList<ArrayList<Integer>>();

@@ -17,8 +17,8 @@ public class 数组中的逆序对 {
         }
         int count = InversePairsCore(array,copy,0,array.length-1);//数值过大求余
         return count;
-
     }
+
     private int InversePairsCore(int[] array,int[] copy,int low,int high)
     {
         if(low==high) {

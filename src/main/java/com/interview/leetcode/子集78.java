@@ -5,7 +5,7 @@ import java.util.*;
 public class 子集78 {
     public static List<List<Integer>> subsets(int[] nums){
         List<List<Integer>> res = new ArrayList<>();
-        backTrace(nums,0,res,new ArrayList<>());
+        backTrace(nums,0,res,new ArrayList());
         return res;
     }
 
