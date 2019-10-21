@@ -11,8 +11,6 @@ public class 输入样例1 {
             for(int i=0; i<len; i++){
                 nums[i]=in.nextInt();
             }
-
-
         }
     }
 }

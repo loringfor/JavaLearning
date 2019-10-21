@@ -1,33 +1,37 @@
 package com.interview.leetcode;
 
 public class 接雨水42 {
+
+//    1. 找出最高点
+//    2. 分别从两边往最高点遍历：如果当前数比左/右局部最大值小，说明可以接到水
     public int trap(int[] height) {
-        if (height == null || height.length == 0) {
-            return 0;
-        }
-        int left = 0;
-        int right = height.length - 1;
-        int left_max = 0;
-        int right_max = 0;
-        int res = 0;
-        while (left < right) {
-            if (height[left] < height[right]) {
-                if (height[left] < left_max) {
-                    res += left_max - height[left];
-                } else{
-                    left_max = height[left];
-                }
-                left++;
-            } else {
-                if (height[right] < right_max){
-                    res += right_max - height[right];
-                } else{
-                    right_max = height[right];
-                }
-                right--;
+        int maxIndex=-1,max=0;
+        for(int i=0;i<height.length;i++){
+            if(height[i]>max){
+                maxIndex = i;
+                max = height[i];
             }
         }
-        return res;
+
+        int sum=0;
+        int leftMax=0,rightMax=0;
+        for(int i=0;i<maxIndex;i++){
+            if(leftMax>height[i]){
+                sum+=leftMax-height[i];
+            }else{
+                leftMax=height[i];
+            }
+        }
+
+        for(int i=height.length-1;i>maxIndex;i--){
+            if(rightMax>height[i]){
+                sum+=rightMax-height[i];
+            }else{
+                rightMax=height[i];
+            }
+        }
+
+        return sum;
     }
 
 }

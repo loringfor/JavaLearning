@@ -15,16 +15,16 @@ public class 全排列 {
         } else {
             for (int i = cursor; i <= end; i++) {
                 ArrayUtils.swap(array, cursor, i);
-                System.out.println("A"+Arrays.toString(array));
+                //System.out.println("A"+Arrays.toString(array));
                 fullArray(array, cursor + 1, end);
-                System.out.println("B"+Arrays.toString(array));
+                //System.out.println("B"+Arrays.toString(array));
                 ArrayUtils.swap(array, cursor, i);
             }
         }
     }
 
     public static void main(String[] args) {
-        int[] array = {1,2,3};
+        int[] array = {1,2,3,4};
         core(array);
     }
 }

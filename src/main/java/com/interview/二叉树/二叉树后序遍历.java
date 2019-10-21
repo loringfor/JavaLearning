@@ -23,7 +23,6 @@ public class 二叉树后序遍历 {
                 list.add(temp.val);
                 last = temp;
                 stack.pop();
-                root=null;
             }else{
                 root = temp.right;
             }

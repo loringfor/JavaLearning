@@ -9,7 +9,6 @@ public class Test{
 //        }
 //        int[] nums={2,6,4,8,10,9,15};
 //        findUnsortedSubarray(nums);
-
         int[] nums;
         nums=new int[4];
         for(int i:nums){
