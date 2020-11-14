@@ -7,11 +7,11 @@
     <!--开启AspectJ功能.-->
     <aop:aspectj-autoproxy/>
 
-    <bean id="dog" class="com.loring.spring.aop.Dog">
+    <bean id="dog" class="com.loring.spring.aop.test.Dog">
         <property name="name" value="王皮皮"/>
     </bean>
 
     <!-- 定义aspect类 -->
-    <bean name="myAspect" class="com.loring.spring.aop.MyAspect"/>
+    <bean name="myAspect" class="com.loring.spring.aop.test.MyAspect"/>
 
 </beans>
